@@ -1,0 +1,60 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# API Keys and Secrets
+*.env
+.env
+.env.local
+assistant-config.json
+assistant-id.txt
+config.json
+
+# OpenAI
+openai-config/assistant-config.json
+openai-config/assistant-id.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Knowledge Base (optional - comment out if you want to commit)
+# knowledge-base/*.md
+# knowledge-base/*.json
+
+# Reports
+reports/*.pdf
+reports/*.xlsx

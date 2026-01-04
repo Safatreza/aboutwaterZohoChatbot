@@ -1,0 +1,136 @@
+{
+  "bot_name": "aboutwater Zoho Assistant",
+  "bot_description": "AI-gestützter Chatbot für Zoho-Hilfe basierend auf offizieller Dokumentation",
+  "language": "de",
+  "bot_type": "codeless",
+  "flow": {
+    "cards": [
+      {
+        "id": "card_1",
+        "type": "message",
+        "name": "Welcome Message",
+        "content": {
+          "text": "Hallo! 👋\n\nIch bin der Zoho-Assistent von aboutwater. Ich helfe dir bei allen Fragen rund um:\n\n• Zoho CRM\n• Zoho Books\n• Zoho Inventory\n• Zoho Sign\n• Zoho SalesIQ\n• Und mehr...\n\nStelle mir einfach deine Frage!",
+          "format": "markdown"
+        },
+        "next": "card_2"
+      },
+      {
+        "id": "card_2",
+        "type": "question",
+        "name": "Collect Question",
+        "content": {
+          "prompt": "Wie kann ich dir helfen?",
+          "input_type": "text",
+          "multiline": true,
+          "variable": "user_question",
+          "validation": {
+            "required": true,
+            "min_length": 5
+          }
+        },
+        "next": "card_3"
+      },
+      {
+        "id": "card_3",
+        "type": "chatgpt_assistant",
+        "name": "OpenAI Assistant Call",
+        "content": {
+          "integration": "openai",
+          "assistant_id": "ASSISTANT_ID_PLACEHOLDER",
+          "input": "${user_question}",
+          "response_variable": "assistant_response",
+          "settings": {
+            "timeout": 30,
+            "max_tokens": 1000
+          }
+        },
+        "next": "card_4",
+        "error_handler": {
+          "message": "Es tut mir leid, ich habe gerade technische Probleme. Kann ich dich mit einem Mitarbeiter verbinden?",
+          "action": "transfer_to_operator"
+        }
+      },
+      {
+        "id": "card_4",
+        "type": "message",
+        "name": "Display Response",
+        "content": {
+          "text": "${assistant_response}",
+          "format": "markdown"
+        },
+        "next": "card_5"
+      },
+      {
+        "id": "card_5",
+        "type": "quick_replies",
+        "name": "Action Buttons",
+        "content": {
+          "buttons": [
+            {
+              "label": "Weitere Frage stellen 🔄",
+              "action": "goto",
+              "target": "card_2"
+            },
+            {
+              "label": "Mit Mitarbeiter sprechen 👤",
+              "action": "transfer_to_operator",
+              "department": "IT Support"
+            },
+            {
+              "label": "Problem gelöst ✅",
+              "action": "end_conversation",
+              "feedback": "positive"
+            },
+            {
+              "label": "Nicht hilfreich ❌",
+              "action": "transfer_to_operator",
+              "feedback": "negative",
+              "message": "Verstanden. Ich verbinde dich mit einem Mitarbeiter."
+            }
+          ]
+        }
+      }
+    ],
+    "settings": {
+      "handoff_rules": {
+        "keywords": ["mitarbeiter", "mensch", "operator", "support", "hilfe", "human"],
+        "action": "transfer_to_operator",
+        "department": "IT Support"
+      },
+      "fallback": {
+        "max_retries": 2,
+        "fallback_message": "Es tut mir leid, ich konnte deine Frage nicht beantworten. Möchtest du mit einem Mitarbeiter sprechen?",
+        "action": "transfer_to_operator"
+      },
+      "timeout": {
+        "inactive_duration": 300,
+        "message": "Bist du noch da? Kann ich dir noch mit etwas helfen?"
+      }
+    }
+  },
+  "deployment": {
+    "channels": {
+      "website": true,
+      "mobile": true,
+      "whatsapp": false,
+      "email": false
+    },
+    "availability": {
+      "always_on": true,
+      "business_hours_only": false,
+      "timezone": "Europe/Berlin"
+    },
+    "targeting": {
+      "all_visitors": false,
+      "logged_in_users": true,
+      "departments": ["All"]
+    }
+  },
+  "metadata": {
+    "version": "1.0",
+    "created": "2026-01-04",
+    "last_modified": "2026-01-04",
+    "author": "aboutwater GmbH"
+  }
+}

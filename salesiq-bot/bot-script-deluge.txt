@@ -1,0 +1,228 @@
+// aboutwater Zoho Assistant - Deluge Script Implementation
+// Version 1.0 - Januar 2026
+//
+// Dieser Deluge-Script implementiert den Zoho Assistant Chatbot
+// mit OpenAI ChatGPT Assistant Integration
+
+// =============================================================================
+// KONFIGURATION
+// =============================================================================
+
+// WICHTIG: Ersetze diese Werte mit deinen eigenen
+assistant_id = "asst_YOUR_ASSISTANT_ID_HERE";  // Von OpenAI Platform
+
+// =============================================================================
+// HAUPTPROZESS
+// =============================================================================
+
+// Schritt 1: Willkommensnachricht
+welcome_message = "Hallo! 👋\n\n";
+welcome_message = welcome_message + "Ich bin der Zoho-Assistent von aboutwater. ";
+welcome_message = welcome_message + "Ich helfe dir bei allen Fragen rund um:\n\n";
+welcome_message = welcome_message + "• Zoho CRM\n";
+welcome_message = welcome_message + "• Zoho Books\n";
+welcome_message = welcome_message + "• Zoho Inventory\n";
+welcome_message = welcome_message + "• Zoho Sign\n";
+welcome_message = welcome_message + "• Zoho SalesIQ\n";
+welcome_message = welcome_message + "• Und mehr...\n\n";
+welcome_message = welcome_message + "Stelle mir einfach deine Frage!";
+
+reply welcome_message;
+
+// Schritt 2: Frage erfassen
+user_question = input.message;
+
+// Validierung
+if (user_question.length() < 5) {
+    error_msg = "Deine Frage ist etwas kurz. Kannst du sie bitte etwas genauer formulieren?";
+    reply error_msg;
+    return;
+}
+
+// Schritt 3: Prüfe auf Eskalations-Keywords
+escalation_keywords = ["mitarbeiter", "mensch", "operator", "support", "human"];
+should_escalate = false;
+
+for each keyword in escalation_keywords {
+    if (user_question.toLowerCase().contains(keyword)) {
+        should_escalate = true;
+        break;
+    }
+}
+
+if (should_escalate) {
+    transfer_msg = "Kein Problem! Ich verbinde dich gleich mit einem Mitarbeiter.";
+    reply transfer_msg;
+    transfer_chat "IT Support";
+    return;
+}
+
+// Schritt 4: OpenAI Assistant aufrufen
+try {
+    // Typing indicator anzeigen
+    typing true;
+
+    // OpenAI API Call
+    ai_response = open_ai {
+        assistant_id: assistant_id,
+        message: user_question,
+        temperature: 0.3
+    };
+
+    // Typing indicator ausblenden
+    typing false;
+
+    // Response extrahieren
+    if (ai_response != null && ai_response.get("content") != null) {
+        assistant_answer = ai_response.get("content");
+
+        // Antwort senden
+        reply assistant_answer;
+
+    } else {
+        // Fallback wenn keine Antwort
+        fallback_msg = "Entschuldigung, ich konnte keine passende Antwort finden. ";
+        fallback_msg = fallback_msg + "Möchtest du mit einem Mitarbeiter sprechen?";
+        reply fallback_msg;
+
+        // Action Buttons
+        actions = [
+            {"label": "Ja, bitte", "action": "transfer"},
+            {"label": "Nein, danke", "action": "end"}
+        ];
+        quick_reply actions;
+        return;
+    }
+
+} catch (e) {
+    // Error handling
+    error_message = "Es tut mir leid, ich habe gerade technische Probleme. ";
+    error_message = error_message + "Kann ich dich mit einem Mitarbeiter verbinden?";
+    reply error_message;
+
+    // Log error für debugging
+    log_error("OpenAI API Error: " + e);
+
+    // Transfer option
+    actions = [
+        {"label": "Ja, verbinde mich", "action": "transfer"},
+        {"label": "Später versuchen", "action": "end"}
+    ];
+    quick_reply actions;
+    return;
+}
+
+// Schritt 5: Action Buttons anzeigen
+action_buttons = [
+    {
+        "label": "Weitere Frage stellen 🔄",
+        "action": "restart"
+    },
+    {
+        "label": "Mit Mitarbeiter sprechen 👤",
+        "action": "transfer_to_operator",
+        "department": "IT Support"
+    },
+    {
+        "label": "Problem gelöst ✅",
+        "action": "end",
+        "feedback": "positive"
+    },
+    {
+        "label": "Nicht hilfreich ❌",
+        "action": "transfer_to_operator",
+        "feedback": "negative"
+    }
+];
+
+quick_reply action_buttons;
+
+// =============================================================================
+// HELPER FUNCTIONS
+// =============================================================================
+
+// Funktion: Feedback speichern
+void save_feedback(feedback_type) {
+    feedback_data = Map();
+    feedback_data.put("type", feedback_type);
+    feedback_data.put("question", user_question);
+    feedback_data.put("timestamp", zoho.currenttime);
+    feedback_data.put("visitor_id", visitor.id);
+
+    // Optional: In Zoho CRM oder Analytics speichern
+    // zoho.crm.create("Feedback", feedback_data);
+}
+
+// Funktion: Transfer mit Kontext
+void transfer_with_context(department) {
+    context_msg = "Mitarbeiter benötigt Hilfe mit:\n";
+    context_msg = context_msg + "Frage: " + user_question + "\n";
+    context_msg = context_msg + "Bot-Antwort: " + assistant_answer;
+
+    set_visitor_info("bot_context", context_msg);
+    transfer_chat department;
+}
+
+// =============================================================================
+// EVENT HANDLERS
+// =============================================================================
+
+// Wenn User auf Button klickt
+on_action = input.action;
+
+if (on_action == "restart") {
+    // Neue Frage stellen
+    restart_msg = "Klar! Stelle deine nächste Frage.";
+    reply restart_msg;
+    // Bot startet von vorne
+
+} else if (on_action == "transfer" || on_action == "transfer_to_operator") {
+    // Transfer to operator
+    transfer_msg = "Einen Moment, ich verbinde dich...";
+    reply transfer_msg;
+
+    // Feedback speichern wenn negativ
+    if (input.feedback == "negative") {
+        save_feedback("negative");
+    }
+
+    transfer_with_context("IT Support");
+
+} else if (on_action == "end") {
+    // Conversation beenden
+    if (input.feedback == "positive") {
+        save_feedback("positive");
+        end_msg = "Super! Schön, dass ich helfen konnte. 😊";
+    } else {
+        end_msg = "Okay! Bei Fragen bin ich jederzeit für dich da.";
+    }
+    reply end_msg;
+    end_chat;
+}
+
+// =============================================================================
+// NOTIZEN
+// =============================================================================
+
+// INSTALLATION:
+// 1. Ersetze "asst_YOUR_ASSISTANT_ID_HERE" mit deiner OpenAI Assistant ID
+// 2. Kopiere dieses Script in SalesIQ → Bots → Zobot → New Script Bot
+// 3. Teste den Bot im Preview-Modus
+// 4. Aktiviere und deploye
+
+// ANPASSUNGEN:
+// - Willkommensnachricht anpassen (Zeile 11-21)
+// - Eskalations-Keywords erweitern (Zeile 31)
+// - Department Namen anpassen (z.B. "IT Support" → "Zoho Team")
+// - Action Button Labels ändern (Zeile 88-103)
+
+// TROUBLESHOOTING:
+// - Wenn Bot nicht antwortet: Überprüfe Assistant ID
+// - Wenn Fehler auftreten: Checke OpenAI API Connection in Settings
+// - Logs anzeigen: Settings → Bots → Logs
+
+// ERWEITERTE FEATURES:
+// - Multi-Language: Spracherkennung hinzufügen
+// - Analytics: Feedback in CRM/Sheets speichern
+// - Proactive: Auto-trigger bei bestimmten Seiten
+// - Context: Besucher-Historie nutzen für personalisierte Antworten

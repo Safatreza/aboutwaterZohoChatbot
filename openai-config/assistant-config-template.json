@@ -1,0 +1,43 @@
+{
+  "assistant_configuration": {
+    "name": "aboutwater_Zoho_Assistant",
+    "model": "gpt-4o",
+    "instructions_file": "system-prompt.txt",
+    "tools": [
+      {
+        "type": "file_search"
+      }
+    ],
+    "tool_resources": {
+      "file_search": {
+        "vector_store_ids": ["VECTOR_STORE_ID_PLACEHOLDER"]
+      }
+    },
+    "temperature": 0.3,
+    "top_p": 1.0,
+    "response_format": "auto"
+  },
+  "vector_store_configuration": {
+    "name": "zoho-knowledge-base",
+    "description": "Zoho documentation for aboutwater employees",
+    "file_sources": [
+      "../knowledge-base/zoho-crm.md",
+      "../knowledge-base/zoho-books.md",
+      "../knowledge-base/zoho-inventory.md",
+      "../knowledge-base/zoho-sign.md",
+      "../knowledge-base/zoho-salesiq.md",
+      "../knowledge-base/zoho-desk.md",
+      "../knowledge-base/zoho-people.md"
+    ],
+    "chunking_strategy": {
+      "type": "auto"
+    }
+  },
+  "metadata": {
+    "project": "aboutwater-zoho-chatbot",
+    "version": "1.0",
+    "created": "2026-01-04",
+    "language": "de",
+    "owner": "aboutwater GmbH"
+  }
+}
