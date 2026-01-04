@@ -50,17 +50,38 @@ class ZohoAssistantCreator:
             print(f"Warning: Knowledge base directory not found: {self.knowledge_base_dir}")
             return []
 
-        markdown_files = list(self.knowledge_base_dir.glob('zoho-*.md'))
+        # Get manual sample files from root of knowledge-base/
+        manual_files = list(self.knowledge_base_dir.glob('*.md'))
 
-        # Also include aboutwater-specific files if they exist
-        custom_files = list(self.knowledge_base_dir.glob('aboutwater-*.md'))
+        # Get all crawled files from knowledge-base/crawled/
+        crawled_dir = self.knowledge_base_dir / 'crawled'
+        crawled_files = []
+        if crawled_dir.exists():
+            crawled_files = list(crawled_dir.glob('*.md'))
 
-        all_files = markdown_files + custom_files
+        all_files = manual_files + crawled_files
+
+        # Remove README files as they're indexes, not content
+        all_files = [f for f in all_files if f.name.lower() != 'readme.md']
 
         print(f"\nFound {len(all_files)} knowledge files:")
-        for file in all_files:
-            file_size = file.stat().st_size / 1024  # KB
-            print(f"  - {file.name} ({file_size:.1f} KB)")
+        print(f"  Manual samples: {len(manual_files)}")
+        print(f"  Crawled articles: {len(crawled_files)}")
+        print(f"  Total: {len(all_files)}")
+
+        # Show breakdown by product for crawled files
+        if crawled_files:
+            products = {}
+            for f in crawled_files:
+                product = f.name.split('_')[0] if '_' in f.name else 'other'
+                products[product] = products.get(product, 0) + 1
+
+            print(f"\n  Crawled breakdown:")
+            for product, count in sorted(products.items()):
+                print(f"    - {product}: {count} files")
+
+        total_size = sum(f.stat().st_size for f in all_files) / 1024  # KB
+        print(f"\n  Total size: {total_size:.1f} KB")
 
         return all_files
 
