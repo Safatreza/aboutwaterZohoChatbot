@@ -105,10 +105,10 @@ class ZohoAssistantCreator:
             }
         )
 
-        print(f"\n✅ Vector store created: {vector_store.id}")
+        print(f"\n[OK] Vector store created: {vector_store.id}")
 
         if not file_paths:
-            print("⚠️  No files to upload")
+            print("[WARNING]  No files to upload")
             return vector_store.id
 
         # Upload files
@@ -118,12 +118,12 @@ class ZohoAssistantCreator:
         try:
             for file_path in file_paths:
                 if file_path.stat().st_size > 512 * 1024 * 1024:  # 512MB limit
-                    print(f"   ⚠️  Skipping {file_path.name} (too large: {file_path.stat().st_size / 1024 / 1024:.1f}MB)")
+                    print(f"   [WARNING]  Skipping {file_path.name} (too large: {file_path.stat().st_size / 1024 / 1024:.1f}MB)")
                     continue
                 file_streams.append(open(file_path, 'rb'))
 
             if not file_streams:
-                print("   ⚠️  No valid files to upload")
+                print("   [WARNING]  No valid files to upload")
                 return vector_store.id
 
             # Batch upload with progress indication
@@ -133,15 +133,15 @@ class ZohoAssistantCreator:
                 files=file_streams
             )
 
-            print(f"\n✅ Upload complete!")
+            print(f"\n[OK] Upload complete!")
             print(f"   Status: {file_batch.status}")
             print(f"   File counts: {file_batch.file_counts}")
 
             if file_batch.status != 'completed':
-                print(f"   ⚠️  Warning: Upload batch status is {file_batch.status}")
+                print(f"   [WARNING]  Warning: Upload batch status is {file_batch.status}")
 
         except Exception as e:
-            print(f"   ❌ Error during upload: {str(e)}")
+            print(f"   [ERROR] Error during upload: {str(e)}")
             raise
         finally:
             # Close all file streams
@@ -170,7 +170,7 @@ class ZohoAssistantCreator:
 
         # Load system prompt
         instructions = self.load_system_prompt()
-        print(f"\n✅ System prompt loaded ({len(instructions)} characters)")
+        print(f"\n[OK] System prompt loaded ({len(instructions)} characters)")
 
         # Create assistant
         assistant = self.client.beta.assistants.create(
@@ -191,7 +191,7 @@ class ZohoAssistantCreator:
             }
         )
 
-        print(f"\n✅ Assistant created successfully!")
+        print(f"\n[OK] Assistant created successfully!")
         print(f"\n{'='*60}")
         print("Assistant Details")
         print("="*60)
@@ -228,14 +228,14 @@ class ZohoAssistantCreator:
         with open(config_file, 'w', encoding='utf-8') as f:
             json.dump(full_config, f, indent=2, ensure_ascii=False)
 
-        print(f"\n✅ Configuration saved to: {config_file}")
+        print(f"\n[OK] Configuration saved to: {config_file}")
 
         # Also save just the assistant ID for quick reference
         id_file = self.config_dir / 'assistant-id.txt'
         with open(id_file, 'w') as f:
             f.write(config["assistant_id"])
 
-        print(f"✅ Assistant ID saved to: {id_file}")
+        print(f"[OK] Assistant ID saved to: {id_file}")
 
     def test_assistant(self, assistant_id: str):
         """Test the assistant with sample questions"""
@@ -279,7 +279,7 @@ class ZohoAssistantCreator:
                 response = messages.data[0].content[0].text.value
                 print(f"\n{response}\n")
             else:
-                print(f"❌ Run failed: {run.status}")
+                print(f"[ERROR] Run failed: {run.status}")
 
         print("="*60)
         print("Testing complete!")
@@ -296,7 +296,7 @@ class ZohoAssistantCreator:
         Returns:
             dict: Complete configuration
         """
-        print("\n" + "🤖 " + "="*58)
+        print("\n" + "="*60)
         print("OpenAI Assistant Setup for aboutwater Zoho Chatbot")
         print("="*60 + "\n")
 
@@ -304,7 +304,7 @@ class ZohoAssistantCreator:
         knowledge_files = self.get_knowledge_files()
 
         if not knowledge_files:
-            print("\n⚠️  Warning: No knowledge files found!")
+            print("\n[WARNING]  Warning: No knowledge files found!")
             print("The assistant will be created but won't have access to documentation.")
             print("Run the crawler first to generate knowledge files.\n")
 
@@ -329,7 +329,7 @@ class ZohoAssistantCreator:
                 self.test_assistant(config["assistant_id"])
 
         print("\n" + "="*60)
-        print("✅ Setup Complete!")
+        print("[OK] Setup Complete!")
         print("="*60)
         print("\nNext steps:")
         print("1. Copy the Assistant ID to SalesIQ configuration")
@@ -351,7 +351,7 @@ def main():
     api_key = os.getenv('OPENAI_API_KEY')
 
     if not api_key:
-        print("\n⚠️  OpenAI API Key not found in environment!")
+        print("\n[WARNING]  OpenAI API Key not found in environment!")
         print("\nPlease set your API key:")
         print("  export OPENAI_API_KEY='sk-proj-...'  (Linux/Mac)")
         print("  set OPENAI_API_KEY=sk-proj-...       (Windows CMD)")
@@ -381,7 +381,7 @@ def main():
     config = creator.create_full_setup(model=model, test=True)
 
     if config:
-        print("\n🎉 All done! Your assistant is ready to use.")
+        print("\n All done! Your assistant is ready to use.")
 
 
 if __name__ == "__main__":
